@@ -1,0 +1,7 @@
+{
+	"shell-version": ["3.20.4"],
+	"uuid": "gnome-better-window-placement@example.com",
+	"name": "Better Window Placement",
+	"description": "When enabled...",
+	"url": "https://github.com/christensson/gnome-better-window-placement"
+}
