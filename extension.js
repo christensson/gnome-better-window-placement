@@ -104,14 +104,38 @@ function _placeWindow(win, ws) {
     }
 
     if (foundPlacement) {
-      // Pack placement up
+      global.log("[better] window (" + win.get_title() + ") rough placement is " + x + ", " + y);
+      // Pack placement north
+      let packedN = false;
       if (foundRow > 0) {
         const r = foundRow - 1;
-        const windowsAbove = squares[r][foundCol];
-        y = windowsAbove.reduce((acc, val) => {
-          const winRect = val.get_rect();
-          return Math.min(acc, winRect.y + winRect.height);
-        }, h * r);
+        const windowsN = squares[r][foundCol];
+        y = windowsN.map((win) => win.get_frame_rect()).reduce(
+          (acc, rect) => Math.max(acc, rect.y + rect.height),
+          h * r
+        );
+        packedN = true;
+        global.log("[better] window (" + win.get_title() + ") moved north to y=" + y);
+      }
+
+      // Pack placement left
+      if (foundCol > 0) {
+        const c = foundCol - 1;
+        const windowsW = squares[foundRow][c];
+        const maxXW = windowsW.map((win) => win.get_frame_rect()).reduce(
+          (acc, rect) => Math.max(acc, rect.x + rect.width),
+          w * c
+        );
+        let maxXNW = maxXW;
+        if (packedN) {
+          const windowsNW = squares[foundRow - 1][c];
+          maxXNW = windowsNW.map((win) => win.get_frame_rect()).reduce(
+            (acc, rect) => Math.max(acc, rect.x + rect.width),
+            w * c
+          );
+        }
+        x = Math.max(maxXNW, maxXW);
+        global.log("[better] window (" + win.get_title() + ") moved west to x=" + x);
       }
 
       if (win.decorated) {
