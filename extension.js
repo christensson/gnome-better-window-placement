@@ -6,12 +6,12 @@ let _workspaceAddedSignal;
 
 let _signals = [];
 
-function matrix(numrows, numcols, initial) {
+function matrix(numrows, numcols, getInitial) {
     var arr = [];
     for (var i = 0; i < numrows; ++i) {
         var columns = [];
         for (var j = 0; j < numcols; ++j) {
-            columns[j] = initial;
+            columns[j] = getInitial();
         }
         arr[i] = columns;
     }
@@ -46,7 +46,7 @@ function _placeWindow(win, ws) {
     // Divide screen in squares with size equal to window to be added
     let rows = Math.floor(max_h / h);
     let cols = Math.floor(max_w / w);
-    let squares = matrix(rows, cols, 0);
+    let squares = matrix(rows, cols, () => []);
 
     global.log("[better] Find placement for (" + win.get_title() + ") - x,y w,h=" + rect.x + "," + rect.y + " " + rect.width + "," + rect.height);
     global.log("[better] rows,cols=" + rows + "," + cols);
@@ -66,29 +66,34 @@ function _placeWindow(win, ws) {
         for (let r = row0; r < Math.min(row0 + rowCnt, rows); r++) {
           for (let c = col0; c < Math.min(col0 + colCnt, cols); c++) {
             global.log("[better] Occupied row=" + r + ", col=" + c + " (" + windows[i].get_title() + ")");
-            squares[r][c] = 1;
+            squares[r][c].push(windows[i]);
           }
         }
       }
     }
 
+    global.log("[better] Occupied pos rows=" + rows + ", cols=" + cols);
     for (let r = 0; r < rows; r++) {
       let row = "";
       for (let c = 0; c < cols; c++) {
-        if (squares[r][c] === 1) {
+        if (squares[r][c].length > 0) {
           row = row + "o";
         } else {
           row = row + " ";
         }
       }
-      global.log("[better] " + row);
+      global.log("[better] (" + r + ") : " + row);
     }
 
     // Find first available slot
     let foundPlacement = false;
+    let foundRow;
+    let foundCol;
     for (let c = 0; c < cols && !foundPlacement; c++) {
       for (let r = 0; r < rows; r++) {
-        if (squares[r][c] === 0) {
+        if (squares[r][c].length === 0) {
+          foundRow = r;
+          foundCol = c;
           x = c * w;
           y = r * h;
           global.log("[better] Found slot at row=" + r + ", col=" + c + " -> " + x + ", " + y + " (" + win.get_title() + ")");
@@ -98,16 +103,26 @@ function _placeWindow(win, ws) {
       }
     }
 
-    if (!foundPlacement) {
+    if (foundPlacement) {
+      // Pack placement up
+      if (foundRow > 0) {
+        const r = foundRow - 1;
+        const windowsAbove = squares[r][foundCol];
+        y = windowsAbove.reduce((acc, val) => {
+          const winRect = val.get_rect();
+          return Math.min(acc, winRect.y + winRect.height);
+        }, h * r);
+      }
+
+      if (win.decorated) {
+  			win.move_frame(true, x, y);
+  		} else {
+  			win.move(true, x, y);
+  		}
+      global.log("[better] window (" + win.get_title() + ") placed at " + x + ", " + y);
+    } else {
       global.log("[better] Found no placement for (" + win.get_title() + ")");
     }
-
-		if (win.decorated) {
-			win.move_frame(true, x, y);
-		} else {
-			win.move(true, x, y);
-		}
-    global.log("[better] window (" + win.get_title() + ") placed at " + x + ", " + y);
 	}
 }
 
