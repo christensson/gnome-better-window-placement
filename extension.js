@@ -52,12 +52,15 @@ function _placeWindow(win, ws) {
         let rect = win.get_frame_rect();//Used in 3.12.2
 
         let monitor = Main.layoutManager.monitors[global.screen.get_current_monitor()];
+        let workArea = win.get_work_area_current_monitor();
+        let minX = workArea.x;
+        let minY = workArea.y;
         let x = monitor.x;
         let y = monitor.y;
         let w = rect.width;
         let h = rect.height;
-        let max_w = monitor.width;
-        let max_h = monitor.height;
+        let max_w = workArea.width;
+        let max_h = workArea.height;
 
         // Divide screen in squares with size equal to window to be added
         let rows = Math.floor(max_h / h);
@@ -152,6 +155,13 @@ function _placeWindow(win, ws) {
                 }
                 x = Math.max(maxXNW, maxXW);
                 debugLog("window (" + win.get_title() + ") moved west to x=" + x);
+            }
+
+            if (x === 0) {
+                x = x + minX;
+            }
+            if (y === 0) {
+                y = y + minY;
             }
 
             if (win.decorated) {
