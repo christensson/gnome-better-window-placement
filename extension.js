@@ -90,15 +90,15 @@ function _placeWindow(win, ws) {
 
         debugLog("Occupied pos rows=" + rows + ", cols=" + cols);
         for (let r = 0; r < rows; r++) {
-          let row = "";
-          for (let c = 0; c < cols; c++) {
-            if (squares[r][c].length > 0) {
-              row = row + "o";
-            } else {
-              row = row + " ";
+            let row = "";
+            for (let c = 0; c < cols; c++) {
+                if (squares[r][c].length > 0) {
+                    row = row + "o";
+                } else {
+                    row = row + " ";
+                }
             }
-          }
-          debugLog("(" + r + ") : " + row);
+            debugLog("(" + r + ") : " + row);
         }
 
         // Find first available slot
@@ -106,62 +106,62 @@ function _placeWindow(win, ws) {
         let foundRow;
         let foundCol;
         for (let c = 0; c < cols && !foundPlacement; c++) {
-          for (let r = 0; r < rows; r++) {
-            if (squares[r][c].length === 0) {
-              foundRow = r;
-              foundCol = c;
-              x = c * w;
-              y = r * h;
-              debugLog("Found slot at row=" + r + ", col=" + c + " -> " + x + ", " + y + " (" + win.get_title() + ")");
-              foundPlacement = true;
-              break;
+            for (let r = 0; r < rows; r++) {
+                if (squares[r][c].length === 0) {
+                    foundRow = r;
+                    foundCol = c;
+                    x = c * w;
+                    y = r * h;
+                    debugLog("Found slot at row=" + r + ", col=" + c + " -> " + x + ", " + y + " (" + win.get_title() + ")");
+                    foundPlacement = true;
+                    break;
+                }
             }
-          }
         }
 
         if (foundPlacement) {
-          debugLog("window (" + win.get_title() + ") rough placement is " + x + ", " + y);
-          // Pack placement north
-          let packedN = false;
-          if (foundRow > 0) {
-            const r = foundRow - 1;
-            const windowsN = squares[r][foundCol];
-            y = windowsN.map((win) => win.get_frame_rect()).reduce(
-              (acc, rect) => Math.max(acc, rect.y + rect.height),
-              h * r
-            );
-            packedN = true;
-            debugLog("window (" + win.get_title() + ") moved north to y=" + y);
-          }
-
-          // Pack placement left
-          if (foundCol > 0) {
-            const c = foundCol - 1;
-            const windowsW = squares[foundRow][c];
-            const maxXW = windowsW.map((win) => win.get_frame_rect()).reduce(
-              (acc, rect) => Math.max(acc, rect.x + rect.width),
-              w * c
-            );
-            let maxXNW = maxXW;
-            if (packedN) {
-              const windowsNW = squares[foundRow - 1][c];
-              maxXNW = windowsNW.map((win) => win.get_frame_rect()).reduce(
-                (acc, rect) => Math.max(acc, rect.x + rect.width),
-                w * c
-              );
+            debugLog("window (" + win.get_title() + ") rough placement is " + x + ", " + y);
+            // Pack placement north
+            let packedN = false;
+            if (foundRow > 0) {
+                const r = foundRow - 1;
+                const windowsN = squares[r][foundCol];
+                y = windowsN.map((win) => win.get_frame_rect()).reduce(
+                    (acc, rect) => Math.max(acc, rect.y + rect.height),
+                    h * r
+                );
+                packedN = true;
+                debugLog("window (" + win.get_title() + ") moved north to y=" + y);
             }
-            x = Math.max(maxXNW, maxXW);
-            debugLog("window (" + win.get_title() + ") moved west to x=" + x);
-          }
 
-          if (win.decorated) {
-                  win.move_frame(true, x, y);
-              } else {
-                  win.move(true, x, y);
-              }
-          debugLog("window (" + win.get_title() + ") placed at " + x + ", " + y);
+            // Pack placement left
+            if (foundCol > 0) {
+                const c = foundCol - 1;
+                const windowsW = squares[foundRow][c];
+                const maxXW = windowsW.map((win) => win.get_frame_rect()).reduce(
+                    (acc, rect) => Math.max(acc, rect.x + rect.width),
+                    w * c
+                );
+                let maxXNW = maxXW;
+                if (packedN) {
+                    const windowsNW = squares[foundRow - 1][c];
+                    maxXNW = windowsNW.map((win) => win.get_frame_rect()).reduce(
+                        (acc, rect) => Math.max(acc, rect.x + rect.width),
+                        w * c
+                    );
+                }
+                x = Math.max(maxXNW, maxXW);
+                debugLog("window (" + win.get_title() + ") moved west to x=" + x);
+            }
+
+            if (win.decorated) {
+                win.move_frame(true, x, y);
+            } else {
+                win.move(true, x, y);
+            }
+            debugLog("window (" + win.get_title() + ") placed at " + x + ", " + y);
         } else {
-          debugLog("Found no placement for (" + win.get_title() + ")");
+            debugLog("Found no placement for (" + win.get_title() + ")");
         }
     }
 }
