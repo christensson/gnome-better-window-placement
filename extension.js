@@ -3,8 +3,7 @@ const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 
 let _workspaceAddedSignal;
-
-let _signals = [];
+let _workspaceSignals;
 
 let verbose = true;
 
@@ -16,14 +15,18 @@ function debugLog() {
     }
 }
 
-function _onWindowAdded(workspace, win) {
+function _onWindowAdded(ws, win) {
+    /* Newly-created windows are added to the workspace before
+     * the compositor knows about them: get_compositor_private() is null.
+     */
     let actor = win.get_compositor_private();
     if (!actor) {
-        Mainloop.idle_add(Lang.bind(this, function () {
-            this._onWindowAdded(workspace, win);
-        }));
+        Mainloop.idle_add(function () {
+            _onWindowAdded(ws, win);
+            return false; // one-time event
+        });
     } else {
-        this._placeWindow(win, workspace);
+        _placeWindow(win, ws);
     }
 }
 
@@ -34,52 +37,58 @@ function _isWindowHandled(win) {
 }
 
 function _placeWindow(win, ws) {
-    if (win == null) {
+    if (win == null || !_isWindowHandled(win)) {
         return;
     }
 
-    if (_isWindowHandled(win)) {
-        // If any other visible windows exists, abort and rely on current placement
-        let numExistingWindows = ws.list_windows().filter(function(item) {
-            return item !== win && _isWindowHandled(item);
-        }).length;
+    // If any other visible windows exists, abort and rely on current placement
+    let numExistingWindows = ws.list_windows().filter(function(item) {
+        return item !== win && _isWindowHandled(item);
+    }).length;
 
-        if (numExistingWindows > 0) {
-            debugLog(
-                "Window \"" + win.get_title() + "\": not placed, " +
-                numExistingWindows + " other windows exist"
-            );
-            return;
-        }
-
-        // No other visible windows, place window in top-left corner
-        let workArea = win.get_work_area_current_monitor();
-        let x = workArea.x;
-        let y = workArea.y;
-
-        win.move_frame(true, x, y);
-        debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
+    if (numExistingWindows > 0) {
+        debugLog(
+            "Window \"" + win.get_title() + "\": not placed, " +
+            numExistingWindows + " other windows exist"
+        );
+        return;
     }
+
+    // No other visible windows, place window in top-left corner
+    let workArea = win.get_work_area_current_monitor();
+    let x = workArea.x;
+    let y = workArea.y;
+
+    win.move_frame(false, x, y);
+    debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
 }
 
 function _onWorkspaceAdded() {
-    this._onDisconnectSignals();
-    let workspace;
+    _onDisconnectSignals();
     for (let i = 0; i < global.screen.n_workspaces; i++) {
-        workspace = global.screen.get_workspace_by_index(i);
-        this._signals.push(workspace.connect(
+        let workspace = global.screen.get_workspace_by_index(i);
+        if (_workspaceSignals.has(workspace)) {
+            continue;
+        }
+        let sigHdlrId = workspace.connect_after(
             'window-added',
-            Lang.bind(this, this._onWindowAdded)
-        ));
+            _onWindowAdded
+        );
+        _workspaceSignals.set(workspace, sigHdlrId);
     }
 }
 
 function _onDisconnectSignals() {
-    for (let i = 0; i < this._signals.length; i++) {
-        global.screen.disconnect(this._signals[i]);
-        this._signals[i] = 0;
+    for (let i = 0; i < global.screen.n_workspaces; i++) {
+        let workspace = global.screen.get_workspace_by_index(i);
+        if (!_workspaceSignals.has(workspace)) {
+            continue;
+        }
+        let sigHdlrId = _workspaceSignals.get(workspace);
+        workspace.disconnect(sigHdlrId);
+        _workspaceSignals.delete(workspace);
     }
-    this._signals = [];
+    _workspaceSignals.clear();
 }
 
 function init() {
@@ -87,16 +96,18 @@ function init() {
 }
 
 function enable() {
+    _workspaceSignals = new Map();
     debugLog("enable");
-    this.workspaceAddedId = global.screen.connect(
+    _workspaceAddedSignal = global.screen.connect(
         'workspace-added',
-        Lang.bind(this, this._onWorkspaceAdded)
+        _onWorkspaceAdded
     );
-    this._onWorkspaceAdded();
-};
+    _onWorkspaceAdded();
+}
 
 function disable() {
     debugLog("disable");
-    global.screen.disconnect(workspaceAddedId);
-    this._onDisconnectSignals();
-};
+    global.screen.disconnect(_workspaceAddedSignal);
+    _onDisconnectSignals();
+    _workspaceSignals = null;
+}
