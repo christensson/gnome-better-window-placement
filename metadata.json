@@ -1,5 +1,5 @@
 {
-	"shell-version": ["3.18.5", "3.20.4"],
+	"shell-version": ["3.18.5", "3.20.4", "3.26.2"],
 	"uuid": "gnome-better-window-placement@example.com",
 	"name": "Better Window Placement",
 	"description": "When enabled...",

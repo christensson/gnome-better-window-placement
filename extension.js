@@ -28,29 +28,30 @@ function _onWindowAdded(workspace, win) {
 }
 
 function _isWindowHandled(win) {
-  /* 0 = Normal Window, 3 = (non-modal) dialog */
-  return win.get_window_type() == 0 || win.get_window_type() == 3;
+    /* 0 = Normal Window, 3 = (non-modal) dialog */
+    return win.get_window_type() == 0 || win.get_window_type() == 3;
 }
 
 function _placeWindow(win, ws) {
     if (win == null) {
-      return;
+        return;
     }
 
     if (_isWindowHandled(win)) {
-        // Check if any existing non-minimized windows
+        // If any other visible windows exists, abort and rely on current placement
         let numExistingWindows = ws.list_windows().filter(function(item) {
-          return item !== win && _isWindowHandled(item) && !item.minimized;
+            return item !== win && _isWindowHandled(item) && !item.minimized;
         }).length;
 
         if (numExistingWindows > 0) {
-          debugLog(
-            "Window \"" + win.get_title() + "\": not placed, " +
-            numExistingWindows + " other windows exist"
-          );
-          return;
+            debugLog(
+                "Window \"" + win.get_title() + "\": not placed, " +
+                numExistingWindows + " other windows exist"
+            );
+            return;
         }
 
+        // No other visible windows, place window in top-left corner
         let workArea = win.get_work_area_current_monitor();
         let x = workArea.x;
         let y = workArea.y;
@@ -70,8 +71,8 @@ function _onWorkspaceAdded() {
     for (let i = 0; i < global.screen.n_workspaces; i++) {
         workspace = global.screen.get_workspace_by_index(i);
         this._signals.push(workspace.connect(
-          'window-added',
-          Lang.bind(this, this._onWindowAdded)
+            'window-added',
+            Lang.bind(this, this._onWindowAdded)
         ));
     }
 }
@@ -90,7 +91,10 @@ function init() {
 
 function enable() {
     debugLog("enable");
-    this.workspaceAddedId = global.screen.connect('workspace-added', Lang.bind(this, this._onWorkspaceAdded));
+    this.workspaceAddedId = global.screen.connect(
+        'workspace-added',
+        Lang.bind(this, this._onWorkspaceAdded)
+    );
     this._onWorkspaceAdded();
 };
 
