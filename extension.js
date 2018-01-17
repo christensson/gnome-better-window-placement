@@ -6,7 +6,7 @@ let _workspaceAddedSignal;
 
 let _signals = [];
 
-let verbose = false;
+let verbose = true;
 
 function debugLog() {
     if (verbose) {
@@ -56,11 +56,7 @@ function _placeWindow(win, ws) {
         let x = workArea.x;
         let y = workArea.y;
 
-        if (win.decorated) {
-            win.move_frame(true, x, y);
-        } else {
-            win.move(true, x, y);
-        }
+        win.move_frame(true, x, y);
         debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
     }
 }
