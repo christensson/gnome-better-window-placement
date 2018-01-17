@@ -1,7 +1,7 @@
 {
-	"shell-version": ["3.18.5", "3.20.4", "3.26.2"],
-	"uuid": "gnome-better-window-placement@example.com",
+	"shell-version": ["3.20.4", "3.26.2"],
+	"uuid": "gnome-better-window-placement@marcus.christensson.com",
 	"name": "Better Window Placement",
-	"description": "When enabled...",
+	"description": "When enabled the first window on each workspace will be placed in the top-left corner without any padding.",
 	"url": "https://github.com/christensson/gnome-better-window-placement"
 }
