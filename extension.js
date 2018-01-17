@@ -29,7 +29,8 @@ function _onWindowAdded(workspace, win) {
 
 function _isWindowHandled(win) {
     /* 0 = Normal Window, 3 = (non-modal) dialog */
-    return win.get_window_type() == 0 || win.get_window_type() == 3;
+    return (win.get_window_type() == 0 || win.get_window_type() == 3) &&
+        !win.minimized && !win.fullscreen;
 }
 
 function _placeWindow(win, ws) {
@@ -40,7 +41,7 @@ function _placeWindow(win, ws) {
     if (_isWindowHandled(win)) {
         // If any other visible windows exists, abort and rely on current placement
         let numExistingWindows = ws.list_windows().filter(function(item) {
-            return item !== win && _isWindowHandled(item) && !item.minimized;
+            return item !== win && _isWindowHandled(item);
         }).length;
 
         if (numExistingWindows > 0) {
