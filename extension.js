@@ -59,6 +59,8 @@ function _placeWindow(win, ws) {
     let x = workArea.x;
     let y = workArea.y;
 
+    // Defer the actual move since the window-added signal is emitted before
+    // the initial window placement.
     Mainloop.idle_add(function () {
         win.move_frame(false, x, y);
         debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
