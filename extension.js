@@ -59,8 +59,11 @@ function _placeWindow(win, ws) {
     let x = workArea.x;
     let y = workArea.y;
 
-    win.move_frame(false, x, y);
-    debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
+    Mainloop.idle_add(function () {
+        win.move_frame(false, x, y);
+        debugLog("Window \"" + win.get_title() + "\" placed at " + x + ", " + y);
+        return false;
+    });
 }
 
 function _onWorkspaceAdded() {
@@ -70,7 +73,7 @@ function _onWorkspaceAdded() {
         if (_workspaceSignals.has(workspace)) {
             continue;
         }
-        let sigHdlrId = workspace.connect_after(
+        let sigHdlrId = workspace.connect(
             'window-added',
             _onWindowAdded
         );
